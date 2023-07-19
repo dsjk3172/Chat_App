@@ -1,76 +1,103 @@
 package com.example.chat_app
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import com.example.chat_app.databinding.ActivityMainBinding
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-    lateinit var db: DBHelper
-    var users = ArrayList<User>()
     private lateinit var binding: ActivityMainBinding
-
+    val api = RetroInterface.create()
+    lateinit var allUser : ArrayList<User>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        db = DBHelper(this)
+        api.allUser().enqueue(object: retrofit2.Callback<ArrayList<User>>{
+            override fun onResponse(
+                call: Call<ArrayList<User>>,
+                response: Response<ArrayList<User>>
+            ) {
+                allUser = response.body()?:return
+            }
 
+            override fun onFailure(call: Call<ArrayList<User>>, t: Throwable) {
+
+            }
+        })
         binding.registerButton.setOnClickListener {
-            createUser().let {
-                if (it != null) {
-                    db.addUser(it)
-                }
-            }
-        }
-        binding.deleteButton.setOnClickListener {
-            createUser().let {
-                if (it != null) {
-                    db.deleteUser(it)
-                }
-            }
-        }
-        binding.selectButton.setOnClickListener {
-            users.clear() // 리스트 초기화 -> 초기화를 하지 않으면 데이터가 중복되서 쌓이게 된다.
-            db.allUsers.forEach { // db에 저장되어 있는 유저 정보들을 가져와서 리스트에 저장
-                users.add(it)
-            }
-            val intent = Intent(this, SelectActivity::class.java) // 인텐트 객체 생성
-            // ArrayList 객체를 인텐트로 전달하려면 ArrayList 에 담기는 데이터 클래스가 Serializable(직렬화) 이 되어 있어야 함.
-            intent.putExtra("users", users) // 인텐트에 데이터 전달
-            startActivity(intent)
+            binding.apply {
+                val id = inputID.text.toString()
+                val pw = inputPw.text.toString()
 
+                if(id == "" || pw == "") {
+                    Toast.makeText(applicationContext, "입력하지 않은 정보가 있습니다.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+            }
+            val newUser = RegisterModel(binding.inputID.text.toString(), binding.inputPw.text.toString())
+            api.register(newUser).enqueue(object: retrofit2.Callback<RegisterResult>{
+                override fun onResponse(call: Call<RegisterResult>, response: Response<RegisterResult>) {
+                    val result = response.body()?.message ?: return
+                    if(result)
+                        Toast.makeText(applicationContext, "회원가입 성공", Toast.LENGTH_SHORT).show()
+                    else
+                        Toast.makeText(applicationContext, "회원가입 실패, 이미 존재하는 아이디 입니다.", Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onFailure(call: Call<RegisterResult>, t: Throwable) {
+                    Log.d("testt", t.message.toString())
+                }
+            })
         }
         binding.loginButton.setOnClickListener {
-            createUser().let {
-                if (it != null) {
-                    if (db.login(it)) {
-                        Toast.makeText(this, "로그인 성공", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this, LoginSuccessActivity::class.java)
-                        intent.putExtra("name", binding.nameEditText.text.toString())
+            binding.apply {
+                val id = inputID.text.toString()
+                val pw = inputPw.text.toString()
+
+                if(id == "" || pw == "") {
+                    Toast.makeText(applicationContext, "입력하지 않은 정보가 있습니다.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+            }
+
+            val loginUser = LoginModel(binding.inputID.text.toString(), binding.inputPw.text.toString())
+            api.login(loginUser).enqueue(object: Callback<LoginResult>{
+                override fun onResponse(call: Call<LoginResult>, response: Response<LoginResult>) {
+                    val user_uid = response.body()?.UID ?: return
+                    if(user_uid != -1) {
+                        Toast.makeText(applicationContext, "로그인 성공", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this@MainActivity, AllUserActivity::class.java)
+
+
+                        intent.putExtra("userList", allUser)
                         startActivity(intent)
-                    } else {
-                        Toast.makeText(this, "로그인 정보가 일치하지 않습니다", Toast.LENGTH_SHORT).show()
+
+                        val sharedPreferences = getSharedPreferences("user_info", Context.MODE_PRIVATE)
+                        val editor = sharedPreferences.edit()
+                        editor.putString("uid", user_uid.toString())
+                        editor.apply()
+
+                        Log.d("testt", user_uid.toString())
                     }
-                }else{
-                    Toast.makeText(this, "정보를 모두 입력해주세요", Toast.LENGTH_SHORT).show()
+                    else{
+                        Toast.makeText(applicationContext, "로그인 실패, 아이디 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show()
+                    }
+
                 }
 
-            }
+                override fun onFailure(call: Call<LoginResult>, t: Throwable) {
+                    Log.d("testt", t.message.toString())
+                }
+            })
         }
 
     }
-    private fun createUser(): User?{
-        val id = binding.idEditText.text.toString()
-        val pw = binding.pwEditText.text.toString()
-        val name = binding.nameEditText.text.toString()
-        if(id == "" || pw == "" || name =="") // 입력 정보가 하나라도 비어있으면
-            return null // Null 반환
-
-        return User(id,pw,name)
-    }
-
-
 }

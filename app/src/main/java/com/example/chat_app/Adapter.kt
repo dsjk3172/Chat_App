@@ -7,17 +7,19 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chat_app.databinding.UserItemBinding
 
-class UserListAdapter: ListAdapter<User, UserListAdapter.ViewHolder>(diffUtil) {
+class Adapter(val itemClicked: (User)->(Unit)): ListAdapter<User, Adapter.ViewHolder>(diffUtil) {
     inner class ViewHolder(private val binding: UserItemBinding): RecyclerView.ViewHolder(binding.root){
         fun bind(user: User){
-            binding.idTextView.text = user.id
-            binding.nameTextView.text = user.name
-        }
+            binding.idTextView.text = user.username
 
+            binding.chatButton.setOnClickListener {
+                itemClicked(user)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(UserItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        return ViewHolder(UserItemBinding.inflate(LayoutInflater.from(parent.context),parent,false))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -25,9 +27,9 @@ class UserListAdapter: ListAdapter<User, UserListAdapter.ViewHolder>(diffUtil) {
     }
 
     companion object{
-        val diffUtil = object: DiffUtil.ItemCallback<User>(){
+        private val diffUtil = object: DiffUtil.ItemCallback<User>(){
             override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
-                return oldItem.id == newItem.id
+                return oldItem.UID == newItem.UID
             }
 
             override fun areContentsTheSame(oldItem: User, newItem: User): Boolean {
