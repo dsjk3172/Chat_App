@@ -1,5 +1,7 @@
 # Chat_App   
 채팅 어플   
+Server : node.js   
+DB : MariaDB
 
 # 개선점   
    
