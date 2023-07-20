@@ -10,7 +10,7 @@ import com.example.chat_app.databinding.UserItemBinding
 class Adapter(val itemClicked: (User)->(Unit)): ListAdapter<User, Adapter.ViewHolder>(diffUtil) {
     inner class ViewHolder(private val binding: UserItemBinding): RecyclerView.ViewHolder(binding.root){
         fun bind(user: User){
-            binding.idTextView.text = user.username
+            binding.idTextView.text = user.userid
 
             binding.chatButton.setOnClickListener {
                 itemClicked(user)
