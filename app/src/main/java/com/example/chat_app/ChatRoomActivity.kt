@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.example.chat_app.databinding.ActivityChatRoomBinding
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -16,11 +17,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.net.URISyntaxException
-import java.text.SimpleDateFormat
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import kotlin.collections.ArrayList
 
 class ChatRoomActivity : AppCompatActivity() {
@@ -32,6 +30,9 @@ class ChatRoomActivity : AppCompatActivity() {
     private var messageList = mutableListOf<Message>()
     private lateinit var adapter: ChatAdapter
     private var num = -1
+    private lateinit var notificationHelper: NotificationHelper
+    private var uid = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatRoomBinding.inflate(layoutInflater)
@@ -39,6 +40,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
         // 현재 로그인한 유저의 uid 가져오기
         val sharedPreferences = getSharedPreferences("user_info", Context.MODE_PRIVATE)
+        uid = sharedPreferences.getString("uid",null)!!.toInt()
         sender = sharedPreferences.getString("uid",null)!!.toInt()
         // 상대방 uid 가져오기
         receiver = intent.getIntExtra("receiver",-1)
@@ -97,7 +99,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
         })
 
-
+        notificationHelper = NotificationHelper(this)
 
 
     }
@@ -154,6 +156,14 @@ class ChatRoomActivity : AppCompatActivity() {
                 binding.chatRecyclerView.scrollToPosition(messageList.size-1)
 
                 Log.e("new me", text)
+
+                if(sender_id != uid) {
+                    val nb: NotificationCompat.Builder =
+                        notificationHelper.getChannelNOtification(text)
+
+                    notificationHelper.getManager().notify(1, nb.build())
+                }
+
             }catch (e: Exception){
                 return@Runnable
             }
@@ -189,7 +199,6 @@ class ChatRoomActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<Message>, t: Throwable) {}
         })
-
     }
 
     private fun clickedEvent(){
