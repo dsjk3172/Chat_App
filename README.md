@@ -1,6 +1,6 @@
 # Chat_App   
 채팅 어플   
-Server : node.js   
+Server : node.js[Link](https://github.com/dsjk3172/SocketServer)   
 DB : MariaDB
 
 # 개선점   
