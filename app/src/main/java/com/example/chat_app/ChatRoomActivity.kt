@@ -55,7 +55,7 @@ class ChatRoomActivity : AppCompatActivity() {
         binding.chatRecyclerView.adapter = adapter
         try{
             // 소켓통신
-            mSocket = IO.socket("http://ip:port")
+            mSocket = IO.socket("http://192.168.0.33:8080")
             mSocket.connect()
 
         }catch (e: URISyntaxException){

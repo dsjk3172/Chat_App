@@ -33,29 +33,8 @@ class MainActivity : AppCompatActivity() {
             }
         })
         binding.registerButton.setOnClickListener {
-            binding.apply {
-                val id = inputID.text.toString()
-                val pw = inputPw.text.toString()
-
-                if(id == "" || pw == "") {
-                    Toast.makeText(applicationContext, "입력하지 않은 정보가 있습니다.", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-            }
-            val newUser = RegisterModel(binding.inputID.text.toString(), binding.inputPw.text.toString())
-            api.register(newUser).enqueue(object: retrofit2.Callback<RegisterResult>{
-                override fun onResponse(call: Call<RegisterResult>, response: Response<RegisterResult>) {
-                    val result = response.body()?.message ?: return
-                    if(result)
-                        Toast.makeText(applicationContext, "회원가입 성공", Toast.LENGTH_SHORT).show()
-                    else
-                        Toast.makeText(applicationContext, "회원가입 실패, 이미 존재하는 아이디 입니다.", Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onFailure(call: Call<RegisterResult>, t: Throwable) {
-                    Log.d("testt", t.message.toString())
-                }
-            })
+            val intent = Intent(this@MainActivity, UserRegister::class.java)
+            startActivity(intent)
         }
         binding.loginButton.setOnClickListener {
             binding.apply {
